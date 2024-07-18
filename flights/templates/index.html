@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flight Search</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <h4>Choose Origin & Destination Airports:</h4>
+            <form method="post">
+                {% csrf_token %}
+                <div class="dropdown-container">
+                    <div class="custom-dropdown">
+                        <label for="origin" class="dropdown-label">Origin</label>
+                        <input type="text" id="origin" class="dropdown-input" name="origin" value="SYD">
+                        <span class="arrow">
+                            <i id="arrow-icon" class="bi bi-caret-down-fill"></i>
+                        </span>
+                        <ul class="dropdown-options">
+                            <li data-value="JFK">JFK</li>
+                            <li data-value="DEL">DEL</li>
+                            <li data-value="SYD">SYD</li>
+                            <li data-value="BOM">BOM</li>
+                            <li data-value="BNE">BNE</li>
+                            <li data-value="BLR">BLR</li>
+                        </ul>
+                    </div>
+                </div><br>
+                <div class="dropdown-container">
+                    <div class="custom-dropdown">
+                        <label for="destination" class="dropdown-label">Destination</label>
+                        <input type="text" id="destination" class="dropdown-input" name="destination" value="JFK">
+                        <span class="arrow">
+                            <i class="arrow-icon bi bi-caret-down-fill"></i>
+                        </span>
+                        <ul class="dropdown-options">
+                            <li data-value="JFK">JFK</li>
+                            <li data-value="DEL">DEL</li>
+                            <li data-value="SYD">SYD</li>
+                            <li data-value="LHR">LHR</li>
+                            <li data-value="CDG">CDG</li>
+                            <li data-value="DOH">DOH</li>
+                            <li data-value="SIN">SIN</li>
+                        </ul>
+                    </div>
+                </div><br>
+                <div class="dropdown-container">
+                    <div class="custom-dropdown">
+                        <label for="cabin" class="dropdown-label">Cabin Selection</label>
+                        <input type="text" id="cabin" class="dropdown-input" name="cabin" placeholder="options">
+                        <span class="arrow">
+                            <i class="arrow-icon bi bi-caret-down-fill"></i>
+                        </span>
+                        <ul class="dropdown-options">
+                            <li data-value="Economy">Economy</li>
+                            <li data-value="Business">Business</li>
+                            <li data-value="First">First</li>
+                        </ul>
+                    </div>
+                </div><br>
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </div>
+        <div class="card-wrapper">
+            <div class="card-container">
+                {% if message %}
+                    <p>{{ message }}</p>
+                {% endif %}
+                
+                {% if data %}
+                    {% for flight in data %}
+                        <div class="card">
+                            <span><i class="bi bi-airplane-engines"></i> <small>Logo</small></span>
+                            <p><span style="font-size: 20px;">{{ flight.partner_program }}</span></p>
+                            <h5 class="card-title" style="margin-top:15px">
+                                <span class="subtext" >{{origin }}<i class="bi bi-arrow-right-short" style="font-size: 1.5em;vertical-align: middle;"></i>{{destination}}</span>
+                            </h5>
+                            <span class="subtext">{{DateFrom}} - {{DateTo}}</span>
+                            {% if flight.min_business_miles %}
+                                <h5 class="card-title">{{ flight.min_business_miles }}<span class="subtext">+ ${{flight.min_business_tax }}</span></h5>
+                                <span class="subtext">Min Business Miles</span>
+                            {% else %}
+                                <h5 class="card-title">N/A</h5>
+                                <span class="subtext">Min Business Miles</span>
+                            {% endif %}
+
+                            {% if flight.min_economy_miles  %}
+                                <h5 class="card-title">{{ flight.min_economy_miles}}<span class="subtext">+ ${{flight.min_economy_tax  }}</span></h5>
+                                <span class="subtext">Min Economy Miles</span>
+                            {% else %}
+                                <h5 class="card-title">N/A</h5>
+                                <span class="subtext">Min Economy Miles</span>
+                            {% endif %}
+
+                            {% if flight.min_first_miles %}
+                                <h5 class="card-title">{{ flight.min_first_miles }}<span class="subtext">+ ${{flight.min_first_tax}}</span></h5>
+                                <span class="subtext">Min First Miles/span>
+                            {% else %}
+                                <h5 class="card-title">N/A</h5>
+                                <span class="subtext">Min First Miles</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+            const dropdownInput = dropdown.querySelector('.dropdown-input');
+            const dropdownOptions = dropdown.querySelector('.dropdown-options');
+            const arrowIcon = dropdown.querySelector('.arrow-icon');
+
+            dropdownInput.addEventListener('focus', () => {
+                dropdownOptions.style.display = 'block';
+                arrowIcon.classList.remove('bi-caret-down-fill');
+                arrowIcon.classList.add('bi-caret-up-fill');
+            });
+
+            dropdownInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    dropdownOptions.style.display = 'none';
+                    arrowIcon.classList.remove('bi-caret-up-fill');
+                    arrowIcon.classList.add('bi-caret-down-fill');
+                }, 200);
+            });
+
+            dropdownInput.addEventListener('input', () => {
+                const filter = dropdownInput.value.toUpperCase();
+                const li = dropdownOptions.getElementsByTagName('li');
+                for (let i = 0; i < li.length; i++) {
+                    const txtValue = li[i].textContent || li[i].innerText;
+                    li[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            });
+
+            dropdownOptions.addEventListener('click', (e) => {
+                if (e.target.tagName === 'LI') {
+                    dropdownInput.value = e.target.textContent;
+                    dropdownOptions.style.display = 'none';
+                    arrowIcon.classList.remove('bi-caret-up-fill');
+                    arrowIcon.classList.add('bi-caret-down-fill');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
